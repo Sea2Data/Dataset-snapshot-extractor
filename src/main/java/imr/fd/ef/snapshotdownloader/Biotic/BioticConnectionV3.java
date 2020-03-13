@@ -14,10 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,8 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -295,10 +291,10 @@ public class BioticConnectionV3{
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss.SSS Z");
         for (RowElementType element : rows){
             String id = element.getElement().get(0).getValue().trim();
-            id = id.replace("T", " ");
-            id = id.replace("Z", " +0000");
+            String datestring = id.replace("T", " ");
+            datestring = datestring.replace("Z", " +0000");
             try {
-                snapshotMaps.put(id, format.parse(id));
+                snapshotMaps.put(id, format.parse(datestring));
             } catch (ParseException ex) {
                 throw new RuntimeException("Internal error. Date parsing" + ex.getMessage());
             }
@@ -322,7 +318,6 @@ public class BioticConnectionV3{
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(no.imr.formats.nmdbiotic.v3.ObjectFactory.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-
             InputStream inStream = this.get(missionpath + "/snapshot/" + snapshotId, "version=3.0");
             Source source = new StreamSource(inStream);
             mission = ((JAXBElement<no.imr.formats.nmdbiotic.v3.MissionType>) jaxbUnmarshaller.unmarshal(source, no.imr.formats.nmdbiotic.v3.MissionType.class)).getValue();

@@ -2,6 +2,7 @@ package imr.fd.ef.snapshotdownloader.Biotic;
 
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,6 +20,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.PropertyException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import no.imr.formats.nmdbiotic.v3.MissionType;
 import no.imr.formats.nmdbiotic.v3.MissionsType;
 import no.imr.formats.nmdbiotic.v3.ObjectFactory;
@@ -101,9 +107,15 @@ public class DatasetDownloader {
         for (int i=index; i<args.length; i++){
             if (this.options.contains(args[i])){
                 this.parseArgs(args, i);
+                break;
             } 
             else{
-                this.addYear(Integer.parseInt(args[i]));
+                try{
+                    this.addYear(Integer.parseInt(args[i]));
+                }
+                catch (NumberFormatException e){
+                    throw new RuntimeException("Error parsing years. Got:" + args[i]);
+                }
             }
         }
     }
@@ -111,6 +123,7 @@ public class DatasetDownloader {
         for (int i=index; i<args.length; i++){
             if (this.options.contains(args[i])){
                 this.parseArgs(args, i);
+                break;
             }
             else{
                 this.addMissionType(Integer.parseInt(args[i]));
@@ -135,7 +148,7 @@ public class DatasetDownloader {
         else if (index >= args.length){
         }
         else if (index == 0){
-            this.parseUrl(args[1]);
+            this.parseUrl(args[0]);
             this.parseArgs(args, index+1);
         }
         else if (this.options.contains(args[index])){
@@ -221,7 +234,14 @@ public class DatasetDownloader {
         
     }
     
-    public void run() throws URISyntaxException, IOException, JAXBException, BioticAPIException, BioticParsingException{
+    public void run(String[] args) throws URISyntaxException, IOException, JAXBException, BioticAPIException, BioticParsingException, ParseException{
+        
+        this.parseArgs(args, 0);
+        if (this.url == null || this.missiontypes.isEmpty() || this.years.isEmpty() ){
+            System.err.println("...");
+            System.err.println("Data sets not sufficiently specified. Aborting.");
+            throw new RuntimeException();
+        }
         
         this.connection = new BioticConnectionV3(this.url);
         Set<String> datasets = connection.findDataSets(this.years, this.missiontypes);
@@ -230,15 +250,25 @@ public class DatasetDownloader {
         this.save(collection, this.outputfile);
     }
     
+    public static MissionsType readDataSet(File xml) throws FileNotFoundException, XMLStreamException, JAXBException{
+        FileInputStream f = new FileInputStream(xml);
+        XMLInputFactory xmlif = XMLInputFactory.newInstance();
+        XMLEventReader xmler = xmlif.createXMLEventReader(f);
+
+        JAXBContext jc = JAXBContext.newInstance(MissionsType.class);
+
+        Unmarshaller unmarshaller = jc.createUnmarshaller();
+        MissionsType toplevel = MissionsType.class.cast(unmarshaller.unmarshal(xmler));
+        return toplevel;
+    }
+    
     public static void main(String[] args) throws Exception{
-        DatasetDownloader m = new DatasetDownloader();
-        m.parseArgs(args, 1);
-        if (m.url == null || m.missiontypes.isEmpty() || m.years.isEmpty() ){
-            System.err.println("...");
-            System.err.println("Data sets not sufficiently specified. Aborting.");
+        try{
+            DatasetDownloader m = new DatasetDownloader();
+            m.run(args);    
+        } catch(RuntimeException e){
             System.exit(1);
         }
-        m.run();
     }
     
 }

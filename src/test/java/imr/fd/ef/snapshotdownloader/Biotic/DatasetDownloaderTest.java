@@ -13,6 +13,7 @@ import java.util.Set;
 import no.imr.formats.nmdbiotic.v3.MissionsType;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
@@ -77,8 +78,6 @@ public class DatasetDownloaderTest {
         assertTrue(instance.missiontypes.size() == 1);
         instance.addMissionType(14);
         assertTrue(instance.missiontypes.size() == 2);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -116,12 +115,13 @@ public class DatasetDownloaderTest {
     @Test
     public void testParseYears() throws Exception {
         System.out.println("parseYears");
-        String[] args = null;
+        String[] args = new String[3];
+        args[1] = "2019";
+        args[2] = "1919";
         int index = 0;
         DatasetDownloader instance = new DatasetDownloader();
-        instance.parseYears(args, index);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        instance.parseYears(args, 1);
+        assertTrue(instance.years.size() == 2);
     }
 
     /**
@@ -130,12 +130,13 @@ public class DatasetDownloaderTest {
     @Test
     public void testParseMissionTypes() throws Exception {
         System.out.println("parseMissionTypes");
-        String[] args = null;
+        String[] args = new String[3];
+        args[1] = "3";
+        args[2] = "3";
         int index = 0;
         DatasetDownloader instance = new DatasetDownloader();
-        instance.parseMissionTypes(args, index);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        instance.parseMissionTypes(args, 1);
+        assertTrue(instance.missiontypes.size() == 1);
     }
 
     /**
@@ -146,11 +147,13 @@ public class DatasetDownloaderTest {
         System.out.println("parseDate");
         String[] args = new String[3];
         args[1] = "-D";
-        args[2] = "2019-02-02";
-        int index = 0;
+        args[2] = "2019-02-03";
+        int index = 2;
         DatasetDownloader instance = new DatasetDownloader();
         instance.parseDate(args, index);
+        assertTrue(instance.date != null);
         assertTrue(instance.date.getMonth() == 1);
+        assertTrue(instance.date.getYear() == 119);
     }
 
     /**
@@ -159,12 +162,13 @@ public class DatasetDownloaderTest {
     @Test
     public void testParseFilename() throws Exception {
         System.out.println("parseFilename");
-        String[] args = null;
-        int index = 0;
+        String[] args = new String[3];
+        args[1] = "-O";
+        args[2] = "fn/ft";
         DatasetDownloader instance = new DatasetDownloader();
-        instance.parseFilename(args, index);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        instance.parseFilename(args, 2);
+        assertTrue(instance.outputfile.getName().equals("ft"));
+        assertTrue(instance.outputfile.getParent().equals("fn"));
     }
 
     /**
@@ -173,12 +177,51 @@ public class DatasetDownloaderTest {
     @Test
     public void testParseArgs() throws Exception {
         System.out.println("parseArgs");
-        String[] args = null;
-        int index = 0;
+        String[] args = new String[12];
+        args[0] = "url";
+        args[1] = "-D";
+        args[2] = "2009-03-02";
+        args[3] = "-Y";
+        args[4] = "1919";
+        args[5] = "1920";
+        args[6] = "1919";
+        args[7] = "-O";
+        args[8] = "filen";
+        args[9] = "-M";
+        args[10] = "3";
+        args[11] = "4";
         DatasetDownloader instance = new DatasetDownloader();
-        instance.parseArgs(args, index);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        instance.parseArgs(args, 0);
+        assertTrue(instance.url.equals("url"));
+        assertTrue(instance.date.getMonth() == 2);
+        assertTrue(instance.date.getYear() == 109);
+        assertTrue(instance.years.size() == 2);
+        assertTrue(instance.missiontypes.size() == 2);
+        assertTrue(instance.outputfile.getName().equals("filen"));
+    }
+    
+    @Test
+    public void testParseArgs2() throws Exception {
+        System.out.println("parseArgs2");
+        TemporaryFolder folder = new TemporaryFolder();
+        folder.create();
+        File targetfolder = folder.newFolder();
+        
+        String[] args = new String[7];
+        args[0] = "http://tomcat7-test.imr.no:8080/apis/nmdapi/biotic/v3";
+        args[1] = "-Y";
+        args[2] = "2018";
+        args[3] = "-M";
+        args[4] = "19";
+        args[5] = "-O";
+        args[6] = targetfolder.getAbsolutePath() + File.separator + "test.xml";
+
+        DatasetDownloader instance = new DatasetDownloader();
+        instance.parseArgs(args, 0);
+        assertTrue(instance.url.equals(args[0]));
+        assertTrue(instance.years.size() == 1);
+        assertTrue(instance.missiontypes.size() == 1);
+        assertTrue(instance.outputfile.getName().equals("test.xml"));
     }
 
     /**
@@ -187,7 +230,7 @@ public class DatasetDownloaderTest {
     @Test
     public void testPrintUsage() {
         System.out.println("printUsage");
-        PrintStream s = null;
+        PrintStream s = System.out;
         DatasetDownloader instance = new DatasetDownloader();
         instance.printUsage(s);
     }
@@ -195,7 +238,6 @@ public class DatasetDownloaderTest {
     /**
      * Test of selectSnapshots method, of class DatasetDownloader.
      */
-    @Test
     public void testSelectSnapshots() throws Exception {
         System.out.println("selectSnapshots");
         Set<String> datasets = null;
@@ -210,7 +252,6 @@ public class DatasetDownloaderTest {
     /**
      * Test of fetchSnapshots method, of class DatasetDownloader.
      */
-    @Test
     public void testFetchSnapshots() throws Exception {
         System.out.println("fetchSnapshots");
         Map<String, String> snapshots = null;
@@ -225,7 +266,6 @@ public class DatasetDownloaderTest {
     /**
      * Test of save method, of class DatasetDownloader.
      */
-    @Test
     public void testSave() throws Exception {
         System.out.println("save");
         MissionsType collection = null;
@@ -236,28 +276,55 @@ public class DatasetDownloaderTest {
         fail("The test case is a prototype.");
     }
 
-    /**
-     * Test of run method, of class DatasetDownloader.
-     */
+
     @Test
     public void testRun() throws Exception {
+        
         System.out.println("run");
         DatasetDownloader instance = new DatasetDownloader();
-        instance.run();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
+        TemporaryFolder folder = new TemporaryFolder();
+        folder.create();
+        File targetfolder = folder.newFolder();
+        
+        String[] args = new String[7];
+        args[0] = "http://tomcat7-test.imr.no:8080/apis/nmdapi/biotic/v3";
+        args[1] = "-Y";
+        args[2] = "2018";
+        args[3] = "-M";
+        args[4] = "19";
+        args[5] = "-O";
+        args[6] = targetfolder.getAbsolutePath() + File.separator + "test.xml";
+        instance.run(args);
 
-    /**
-     * Test of main method, of class DatasetDownloader.
-     */
-    @Test
-    public void testMain() throws Exception {
-        System.out.println("main");
-        String[] args = null;
-        DatasetDownloader.main(args);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        MissionsType t = DatasetDownloader.readDataSet(new File(args[6]));
+        assertTrue(t.getMission().get(0).getMissiontype().equals("19"));
+        assertTrue(t.getMission().get(0).getFishstation().size()>1);
+        
+    }
+    
+    //@Test
+    public void testRunDate() throws Exception {
+        
+        System.out.println("run");
+        DatasetDownloader instance = new DatasetDownloader();
+        TemporaryFolder folder = new TemporaryFolder();
+        folder.create();
+        File targetfolder = folder.newFolder();
+        
+        String[] args = new String[7];
+        args[0] = "http://tomcat7-test.imr.no:8080/apis/nmdapi/biotic/v3";
+        args[1] = "-Y";
+        args[2] = "2018";
+        args[3] = "-M";
+        args[4] = "19";
+        args[5] = "-O";
+        args[6] = targetfolder.getAbsolutePath() + File.separator + "test.xml";
+        instance.run(args);
+
+        MissionsType t = DatasetDownloader.readDataSet(new File(args[6]));
+        assertTrue(t.getMission().get(0).getMissiontype().equals("19"));
+        assertTrue(t.getMission().get(0).getFishstation().size()>1);
+        fail("Prototype. Add check with date, against predownloaded snapshots.");
     }
     
 }
