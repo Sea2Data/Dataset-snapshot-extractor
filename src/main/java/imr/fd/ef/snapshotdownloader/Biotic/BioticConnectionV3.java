@@ -14,10 +14,19 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -25,6 +34,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import no.imr.formats.nmdbiotic.v3.CatchsampleType;
+import no.imr.formats.nmdbiotic.v3.MissionType;
 import no.imr.formats.nmdcommon.v2.ListElementType;
 import no.imr.formats.nmdcommon.v2.ListType;
 import no.imr.formats.nmdcommon.v2.RowElementType;
@@ -208,7 +218,7 @@ public class BioticConnectionV3{
     public Set<String> findDataSets(Set<Integer> years, Set<String> missiontypes) throws IOException, JAXBException, JAXBException, BioticAPIException, BioticParsingException {
         return findDataSets(years, missiontypes, null, null, null);
     }
-
+    
     public List<no.imr.formats.nmdbiotic.v3.FishstationType> listFishstation(String missionpath) throws IOException, BioticAPIException, JAXBException {
 
         no.imr.formats.nmdbiotic.v3.ListType all = null;
@@ -261,7 +271,72 @@ public class BioticConnectionV3{
 
         return ll.toLinkedList(all);
     }
+    
+    public Map<String, Date> listSnapshots(String missionpath) throws IOException, JAXBException, BioticAPIException{
+        no.imr.formats.nmdcommon.v2.ListType snapshots = null;
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(no.imr.formats.nmdcommon.v2.ObjectFactory.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
+            InputStream inStream = this.get(missionpath + "/snapshot", "version=3.0");
+            Source source = new StreamSource(inStream);
+            snapshots = ((JAXBElement<no.imr.formats.nmdcommon.v2.ListType>) jaxbUnmarshaller.unmarshal(source, no.imr.formats.nmdcommon.v2.ListType.class)).getValue();
+            inStream.close();
+        } catch (BioticAPIException e) {
+                throw e;
+        } finally {
+            this.disconnect();
+
+        }
+        
+        List<RowElementType> rows = snapshots.getRow();
+        
+        Map<String, Date> snapshotMaps = new HashMap<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss.SSS Z");
+        for (RowElementType element : rows){
+            String id = element.getElement().get(0).getValue().trim();
+            id = id.replace("T", " ");
+            id = id.replace("Z", " +0000");
+            try {
+                snapshotMaps.put(id, format.parse(id));
+            } catch (ParseException ex) {
+                throw new RuntimeException("Internal error. Date parsing" + ex.getMessage());
+            }
+        }
+        return snapshotMaps;
+    }
+
+    /**
+     * Get mission snapshot
+     * 
+     * @param missionpath identifies mission
+     * @param snapshotId identifies snapshot string representation of date as returned by listSnapshots
+     * @return snapshot of mission
+     * @throws BioticAPIException
+     * @throws JAXBException
+     * @throws IOException 
+     */
+    public MissionType getSnapshot(String missionpath, String snapshotId) throws BioticAPIException, JAXBException, IOException{
+        MissionType mission = null;
+        
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(no.imr.formats.nmdbiotic.v3.ObjectFactory.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+
+            InputStream inStream = this.get(missionpath + "/snapshot/" + snapshotId, "version=3.0");
+            Source source = new StreamSource(inStream);
+            mission = ((JAXBElement<no.imr.formats.nmdbiotic.v3.MissionType>) jaxbUnmarshaller.unmarshal(source, no.imr.formats.nmdbiotic.v3.MissionType.class)).getValue();
+            inStream.close();
+        } catch (BioticAPIException e) {
+                throw e;
+        } finally {
+            this.disconnect();
+
+        }
+
+        return mission;
+    }
+    
     /**
      * Get catchsample with given address
      *

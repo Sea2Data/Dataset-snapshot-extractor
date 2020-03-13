@@ -8,9 +8,12 @@ package imr.fd.ef.snapshotdownloader.Biotic;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import no.imr.formats.nmdbiotic.v3.CatchsampleType;
+import no.imr.formats.nmdbiotic.v3.MissionType;
 import no.imr.formats.nmdcommon.v2.ListType;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -101,6 +104,39 @@ public class BioticConnectionV3Test {
         assertEquals(3, result.size());
     }
 
+    /**
+     * testGetSnapshot
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSnapshot() throws Exception {
+        System.out.println("testSnapshot");
+        BioticConnectionV3 instance = new BioticConnectionV3(this.url);
+        MissionType mission = instance.getSnapshot("Forskningsfartøy/2017/G.O.Sars_LMEL/2017150", "2018-06-05T22.00.00.096Z");
+        System.out.println(mission.getCruise());
+        assertTrue(mission != null);
+    }
+    
+       /**
+     * testGetSnapshot
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testListSnapshots() throws Exception {
+        System.out.println("testListSnapshots");
+        BioticConnectionV3 instance = new BioticConnectionV3(this.url);
+        Map<String, Date> snapshots = instance.listSnapshots("Forskningsfartøy/2017/G.O.Sars_LMEL/2017150");
+        assertTrue(snapshots.size() > 0);
+        Set<Map.Entry<String, Date>> entries = snapshots.entrySet();
+        Map.Entry<String, Date> entry = entries.iterator().next();
+        String id = entry.getKey();
+        Date date = entry.getValue();
+        System.out.print(id + ":" + date.toString());
+        
+    }
+    
     /**
      * testGetCatchsample
      *
