@@ -24,7 +24,6 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 import no.imr.formats.nmdbiotic.v3.MissionType;
 import no.imr.formats.nmdbiotic.v3.MissionsType;
 import no.imr.formats.nmdbiotic.v3.ObjectFactory;
@@ -174,23 +173,19 @@ public class DatasetDownloader {
     }
     
     protected void printUsage(PrintStream s){
-        s.println("Extract collections of data sets from snapshots, with optional restriction on snapshot date");
+        s.println("Extract collections of data sets from snapshots, with optional restriction on snapshot date.");
         s.println("Usage: <url> <-Y> <year 1> ... <year n> <-M> <missiontype> ... <missiontype> [-D yyyy-MM-DD] <-O> <outputfile>");
         s.println("-H: Print this help message.");
         s.println("-Y: The years to include in collection.");
         s.println("-M: The mission types to include in collection.");
-        s.println("-D: optional. If included the latest snapshot preceeding this date will be used for each dataset");
+        s.println("-D: optional. If included the latest snapshot preceeding this date will be used for each dataset. And only datasets present before this date will be included.");
         s.println("-O: output file");
     }
     
-    protected Map<String, String> selectSnapshots(Set<String> datasets) throws IOException, JAXBException, BioticAPIException{
-        Map<String, String> snapshots = new HashMap<>();
-        
-        for (String s : datasets){
-            
-            Map<String, Date> setSnapshots = this.connection.listSnapshots(s);
-            Map.Entry<String, Date> newestEntry = null;
-            for (Map.Entry<String, Date> entry: setSnapshots.entrySet()){
+    protected String selectSnapshot(String dataset) throws SnapshotCriteriaException, IOException, JAXBException, BioticAPIException{
+        Map<String, Date> setSnapshots = this.connection.listSnapshots(dataset);
+        Map.Entry<String, Date> newestEntry = null;
+        for (Map.Entry<String, Date> entry: setSnapshots.entrySet()){
                 
                 // date is not restricted, or the date is before the restriction 
                 if (this.date == null || entry.getValue().before(this.date)){
@@ -204,10 +199,23 @@ public class DatasetDownloader {
             }
             
             if (newestEntry == null){
-                throw new RuntimeException("No snapshot meet the criteria for data set " + s);
+                throw new SnapshotCriteriaException("No snapshot meet the criteria for data set " + dataset);
             }
-            
-            snapshots.put(s, newestEntry.getKey());
+        return newestEntry.getKey();
+    }
+    
+    // only returns snapshots for the data avaialbe on the restriction date.
+    protected Map<String, String> selectSnapshots(Set<String> datasets) throws IOException, JAXBException, BioticAPIException{
+        Map<String, String> snapshots = new HashMap<>();
+        
+        for (String s : datasets){
+            try{
+                String snapshot = this.selectSnapshot(s);
+                snapshots.put(s, snapshot);
+            }
+            catch (SnapshotCriteriaException e){
+                
+            }
         }
         return snapshots;
     }
@@ -234,13 +242,13 @@ public class DatasetDownloader {
         
     }
     
-    public void run(String[] args) throws URISyntaxException, IOException, JAXBException, BioticAPIException, BioticParsingException, ParseException{
+    public void run(String[] args) throws URISyntaxException, IOException, JAXBException, BioticAPIException, BioticParsingException, ParseException, RunException{
         
         this.parseArgs(args, 0);
         if (this.url == null || this.missiontypes.isEmpty() || this.years.isEmpty() ){
             System.err.println("...");
             System.err.println("Data sets not sufficiently specified. Aborting.");
-            throw new RuntimeException();
+            throw new RunException("Configuration issues");
         }
         
         this.connection = new BioticConnectionV3(this.url);
@@ -266,9 +274,11 @@ public class DatasetDownloader {
         try{
             DatasetDownloader m = new DatasetDownloader();
             m.run(args);    
-        } catch(RuntimeException e){
+        }
+        catch (RunException e){
             System.exit(1);
         }
+        
     }
     
 }

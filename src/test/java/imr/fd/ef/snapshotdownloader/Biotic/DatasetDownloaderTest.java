@@ -7,7 +7,10 @@ package imr.fd.ef.snapshotdownloader.Biotic;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import no.imr.formats.nmdbiotic.v3.MissionsType;
@@ -238,29 +241,52 @@ public class DatasetDownloaderTest {
     /**
      * Test of selectSnapshots method, of class DatasetDownloader.
      */
+    @Test
     public void testSelectSnapshots() throws Exception {
         System.out.println("selectSnapshots");
-        Set<String> datasets = null;
+        Set<String> datasets = new HashSet<>();
+        datasets.add("/Forskningsfartøy/2017/G.O.Sars_LMEL/2017150");
+        
         DatasetDownloader instance = new DatasetDownloader();
-        Map<String, String> expResult = null;
+        instance.url = "http://tomcat7-test.imr.no:8080/apis/nmdapi/biotic/v3";
+        instance.connection = new BioticConnectionV3(instance.url);
+        
+        // without date restriction
+        Map<String, String> expResult = new HashMap<>();
+        expResult.put("/Forskningsfartøy/2017/G.O.Sars_LMEL/2017150", "2019-01-24T23.00.03.315Z");
         Map<String, String> result = instance.selectSnapshots(datasets);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+
+        // with date restriction
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        instance.setDate(format.parse("2018-10-11"));
+        Map<String, String> expResultWDate = new HashMap<>();
+        expResultWDate.put("/Forskningsfartøy/2017/G.O.Sars_LMEL/2017150", "2018-10-10T00.00.13.853Z");
+        Map<String, String> resultWDate = instance.selectSnapshots(datasets);
+        assertEquals(expResultWDate, resultWDate);
+        
+        // with restriction before first snapshot
+        instance.setDate(format.parse("2017-10-11"));
+        Map<String, String> resultRestr = instance.selectSnapshots(datasets);
+        assertTrue(resultRestr.size() == 0);
+
     }
 
     /**
      * Test of fetchSnapshots method, of class DatasetDownloader.
      */
+    @Test
     public void testFetchSnapshots() throws Exception {
         System.out.println("fetchSnapshots");
-        Map<String, String> snapshots = null;
+        Map<String, String> snapshots = new HashMap<>();
+        snapshots.put("/Forskningsfartøy/2017/G.O.Sars_LMEL/2017150", "2018-10-10T00.00.13.853Z");
+        
         DatasetDownloader instance = new DatasetDownloader();
-        MissionsType expResult = null;
+        instance.url = "http://tomcat7-test.imr.no:8080/apis/nmdapi/biotic/v3";
+        instance.connection = new BioticConnectionV3(instance.url);
+        
         MissionsType result = instance.fetchSnapshots(snapshots);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertTrue(result.getMission().get(0).getCruise().equals("2017150"));
     }
 
     /**
