@@ -174,6 +174,7 @@ public class DatasetDownloader {
     
     protected void printUsage(PrintStream s){
         s.println("Extract collections of data sets from snapshots, with optional restriction on snapshot date.");
+        s.println("Extract is based on generated snapshopts, so restriction dates prior to rollout of snapshot system will give files.");
         s.println("Usage: <url> <-Y> <year 1> ... <year n> <-M> <missiontype> ... <missiontype> [-D yyyy-MM-DD] <-O> <outputfile>");
         s.println("-H: Print this help message.");
         s.println("-Y: The years to include in collection.");
