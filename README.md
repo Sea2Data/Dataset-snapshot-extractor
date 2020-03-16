@@ -10,8 +10,8 @@ Output is always generated from snapshots (rather than live data). If the date r
 * Extraction of fisheries dependent data in a single file can be achieved by including the mission types emplyed in fisheries dependent sampling.
 
 ## Examples
-For usage instructions:
+For usage instructions:  
 java -jar target/DatasetSnapshotDownloader-1.0-SNAPSHOT-jar-with-dependencies.jar 
 
-Example for extracting a data set of all fisheries dependent data from snapshots reflecting the state of the database at 2019-02-10:
+Example for extracting a data set of all fisheries dependent data from snapshots reflecting the state of the database at 2019-02-10:  
 java -jar target/DatasetSnapshotDownloader-1.0-SNAPSHOT-jar-with-dependencies.jar http://tomcat7.imr.no:8080/apis/nmdapi/biotic/v3 -Y 2018 -M 1 2 3 9 10 11 12 13 19 -D 2019-02-10 -O commSampling2018_2019_02_10.xml
