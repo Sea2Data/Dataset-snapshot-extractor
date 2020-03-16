@@ -5,6 +5,8 @@ The latest snapshot older than the date restriction will fetched for each data s
 The snapshot system was rolled out for NMDbiotic v3 in february 2019. Attempting to set the restriction date prior to this will result in empty sets.
 Output is always generated from snapshots (rather than live data). If the date restriction is not provided, data set collection will be generated from latest snapshots.
 
+For this prototye, unittests are configured to run against NMDbiotic3 test-server, without proper mocking of test data. That is tests will fail when the state of the test server changes with respect to specific data set snapshots.
+
 ## Usages
 * Versioned files for all data in a year can be obtained by including all mission types
 * Extraction of fisheries dependent data in a single file can be achieved by including the mission types emplyed in fisheries dependent sampling.
