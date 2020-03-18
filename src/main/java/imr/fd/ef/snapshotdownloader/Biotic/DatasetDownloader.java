@@ -175,6 +175,7 @@ public class DatasetDownloader {
     protected void printUsage(PrintStream s){
         s.println("Extract collections of data sets from snapshots, with optional restriction on snapshot date.");
         s.println("Extract is based on generated snapshopts, so restriction dates prior to rollout of snapshot system will give files.");
+        s.println("Snapshots are not necesarilly created for empty missions (missions with no fishstations) these are also silently skipped.");
         s.println("Usage: <url> <-Y> <year 1> ... <year n> <-M> <missiontype> ... <missiontype> [-D yyyy-MM-DD] <-O> <outputfile>");
         s.println("-H: Print this help message.");
         s.println("-Y: The years to include in collection.");
@@ -183,8 +184,19 @@ public class DatasetDownloader {
         s.println("-O: output file");
     }
     
+    // list snapshots for data set
+    // throws a SnapshotCriteriaException if snapshot can not be found or no snapshot meet criteria.
     protected String selectSnapshot(String dataset) throws SnapshotCriteriaException, IOException, JAXBException, BioticAPIException{
-        Map<String, Date> setSnapshots = this.connection.listSnapshots(dataset);
+        Map<String, Date> setSnapshots = null;
+        try{
+            setSnapshots = this.connection.listSnapshots(dataset);
+        } catch(BioticAPIException e){
+            if (e.getResponseMessage().contains("No snapshots found.")){
+                throw new SnapshotCriteriaException("No snapshot found for data set " + dataset);
+            } else{
+                throw e;
+            }
+        }
         Map.Entry<String, Date> newestEntry = null;
         for (Map.Entry<String, Date> entry: setSnapshots.entrySet()){
                 
